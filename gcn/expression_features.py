@@ -48,7 +48,7 @@ class CorrelationExpressionGraph(object):
     def __build_labels(self, replace_values):
         labels = self.df[self.label_column].values
         if replace_values:
-            for k, v in replace_values.iteritems():
+            for k, v in replace_values.items():
                 labels[labels == k] = v
         if not self.is_regression:
             self.num_labels = int(labels.max())

@@ -4,6 +4,8 @@ from gcn.layers import GCNLayer
 import pandas as pd
 from gcn.expression_features import CorrelationExpressionGraph
 from sklearn.model_selection import train_test_split
+import argparse
+import json
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -16,10 +18,14 @@ class TensorflowExpressionGraph(object):
     @staticmethod
     def build_graph(x_dict, training):
         gcn_layer1 = GCNLayer(x_dict['features'], 35,
-                              activation=tf.nn.relu, support=2,
+                              activation=tf.nn.relu, support=1,
                               kernel_initializer=tf.glorot_uniform_initializer(seed=12345))()
-        do = tf.layers.dropout(gcn_layer1, 0.35)
-        flattened = tf.layers.flatten(do)
+        do1 = tf.layers.dropout(gcn_layer1, 0.25, training=training)
+        gcn_layer2 = GCNLayer(do1, 35,
+                              activation=tf.nn.relu, support=1,
+                              kernel_initializer=tf.glorot_uniform_initializer(seed=12345))()
+        do2 = tf.layers.dropout(gcn_layer2, 0.25, training=training)
+        flattened = tf.layers.flatten(do2)
         return tf.layers.dense(flattened, 2, kernel_initializer=tf.glorot_uniform_initializer(seed=12345))
 
     @staticmethod
@@ -62,12 +68,12 @@ class TensorflowExpressionGraph(object):
         self.model.train(input_fn, steps=epochs)
 
     def save_model(self, path):
-        self.model.export_savedmodel(export_dir_base=path, serving_input_receiver_fn=TensorflowExpressionGraph.serving_input_fn)
+        self.model.export_savedmodel(export_dir_base=path,
+                                     serving_input_receiver_fn=TensorflowExpressionGraph.serving_input_fn)
 
     def predictions(self, x):
         x = x.astype(np.float32)
-        input_fn = tf.estimator.inputs.numpy_input_fn(x={'features': x},
-                                                      shuffle=False)
+        input_fn = tf.estimator.inputs.numpy_input_fn(x={'features': x}, shuffle=False)
         return self.model.predict(input_fn)
 
     def full_predictions(self, x):
@@ -87,12 +93,26 @@ class TensorflowExpressionGraph(object):
 
 
 if __name__ == '__main__':
-    df = pd.read_csv('example.csv')
+    parser = argparse.ArgumentParser(description='Simple arguments for estimator.')
+    parser.add_argument('--file', dest='file_name', default='example.csv',
+                        help='file name for running')
+    parser.add_argument('--label', dest='label', default='risk',
+                        help='label in file')
+    parser.add_argument('--ignore-columns', dest='ignore_columns', default=['sample_id'], nargs='+',
+                        help='ignore_columns')
+    parser.add_argument('--epochs', dest='epochs', default=4000, type=int,
+                        help='epochs')
+    parser.add_argument('--replace-labels', dest='replace_labels', default='{"high": 1.0, "low": 0.0}',
+                        help='replace labels json object')
+    args = parser.parse_args()
+    replace_labels = json.loads(args.replace_labels)
 
-    expression_builder = CorrelationExpressionGraph(df, label_column='risk', ignore_columns=['sample_id'])
-    feats, labs = expression_builder.build_features_apply_mult(replace_labels={"high": 1.0, "low": 0.0})
+    df = pd.read_csv(args.file_name)
+
+    expression_builder = CorrelationExpressionGraph(df, label_column=args.label, ignore_columns=args.ignore_columns)
+    feats, labs = expression_builder.build_features_apply_mult(replace_labels=replace_labels)
     X_train, X_test, y_train, y_test = train_test_split(feats, labs, test_size=0.15, random_state=12345)
 
     tgraph = TensorflowExpressionGraph()
-    tgraph.train_model(X_train, y_train, epochs=1500, batch_size=300)
+    tgraph.train_model(X_train, y_train, epochs=args.epochs, batch_size=300)
     print("Test Error: %s" % str(np.abs(np.argmax(y_test, axis=1) - tgraph.full_predictions(X_test)).sum()))

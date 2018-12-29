@@ -1,7 +1,16 @@
 # Graph Convolutional Networks on Correlation Based Graphs
 
-This repo provides simple tools to run Graph Convolutional Networks (GCNs) on Correlation Based Graphs. 
+This repo provides simple tools to run a Graph Convolutional Network (GCNs) on Correlation Based Graphs. 
 In practice these methods can be applied to gene expression, proteomics, and other types of data. 
+
+In correlation based graphs, the edges represent how correlated one node is with another. Due to this assumption, 
+certain operations from the original GCN paper are not needed (such as summing the identity matrix with the adjacency matrix).
+
+## How to Run the python script
+
+I have provided a Dockerfile that can run the `example_estimator.py`\
+. It takes a few arguments that can be passed in the
+docker run. 
 
 
 ## Citing this Repo
