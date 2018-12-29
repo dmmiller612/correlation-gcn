@@ -12,7 +12,7 @@ In practice these methods can be applied to gene expression, proteomics, and oth
   year = {2018},
   publisher = {GitHub},
   journal = {GitHub repository},
-  howpublished = {\url{https://github.com/dmmiller612}}
+  howpublished = {\url{https://github.com/dmmiller612/correlation-gcn}}
 }
 ```
 
