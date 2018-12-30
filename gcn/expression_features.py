@@ -126,3 +126,9 @@ class CorrelationExpressionGraph(object):
         A_D = np.tile(A_D, (feats.shape[0], 1, 1))
         # Formula D^-0.5 * A * D^-0.5 * X
         return A_D * feats, labels
+
+    def build_features_with_adjacency(self, replace_labels=None, correlation_bin=None,
+                                      apply_diagonal_normalization=True):
+        feats, labels, A, D = self.build_features(replace_labels, correlation_bin, apply_diagonal_normalization)
+        A_D = np.dot(D, A)
+        return feats, labels, A_D
