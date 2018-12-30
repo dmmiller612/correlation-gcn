@@ -37,12 +37,9 @@ docker run.
 ```
 
 ```
-@misc{Miller2018,
+@misc{Ying2018,
   author = {Ying, Rex, You, Jiaxuan, ...},
   title = {Hierarchical Graph Representation Learning with Differentiable Pooling},
-  year = {2018},
-  publisher = {GitHub},
-  journal = {GitHub repository},
-  howpublished = {\url{https://github.com/dmmiller612/correlation-gcn}}
+  year = {2018}
 }
 ```
